@@ -47,9 +47,10 @@ function Login() {
       }
 
       localStorage.setItem("token", response.data.token);
+      localStorage.setItem("userName",response.data.username)
       toast.success(`${isLogin ? "Login" : "Registration"} successful`, { autoClose: 1000 });
       
-      navigate("../Navbar");
+      navigate("../Dashboard");
     } catch (err) {
       console.error(`Error during ${isLogin ? "login" : "registration"}:`, err);
       setError(err.response?.data?.message || err.message);

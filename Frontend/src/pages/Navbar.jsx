@@ -1,10 +1,30 @@
 import { useState, useEffect } from 'react';
+import { useNavigate,Link } from 'react-router-dom';
 
 const Navbar = () => {
-  const [darkMode, setDarkMode] = useState(
-    localStorage.getItem('theme') === 'dark'
-  );
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [darkMode, setDarkMode] = useState(localStorage.getItem('theme') === 'dark');
+  const [username, setUsername] = useState("");
+  const navigate = useNavigate();
 
+  // Toggle dropdown visibility
+  const handleProfileClick = () => {
+    setDropdownOpen(prev => !prev);
+  };
+
+  // Handle Login click: redirect to login page
+  const handleLogin = () => {
+    navigate('/login');
+  };
+
+  // Handle Logout click: perform logout logic then redirect
+  const handleLogout = () => {
+    // For example, clear username and other tokens:
+    localStorage.removeItem("username");
+    navigate('/login');
+  };
+
+  // Dark mode effect
   useEffect(() => {
     if (darkMode) {
       document.documentElement.classList.add('dark');
@@ -18,6 +38,14 @@ const Navbar = () => {
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
   };
+
+  // Retrieve username from localStorage when Navbar mounts
+  useEffect(() => {
+    const storedUsername = localStorage.getItem("username");
+    if (storedUsername) {
+      setUsername(storedUsername);
+    }
+  }, []);
 
   return (
     <nav className="bg-white border-gray-200 dark:bg-gray-900">
@@ -35,27 +63,42 @@ const Navbar = () => {
         <div className="items-center justify-between hidden w-full md:flex md:w-auto md:order-1" id="navbar-user">
           <ul className="flex flex-col font-medium p-4 md:p-0 mt-4 border border-gray-100 rounded-lg bg-gray-50 md:space-x-8 md:flex-row md:mt-0 md:border-0 md:bg-white dark:bg-gray-800 md:dark:bg-gray-900 dark:border-gray-700">
             <li>
-              <a href="#" className="block py-2 px-3 text-white bg-orange-900 rounded-sm md:bg-transparent md:text-orange-900 md:p-0 md:dark:text-orange-900">
+              <Link
+                to="/Dashboard"
+                className="block py-2 px-3 text-white bg-orange-900 rounded-sm md:bg-transparent md:text-orange-900 md:p-0 md:dark:text-orange-900"
+              >
                 Home
-              </a>
+              </Link>
             </li>
             <li>
-              <a href="#" className="block py-2 px-3 text-gray-900 rounded-sm hover:bg-gray-100 md:hover:bg-transparent md:hover:text-orange-900 md:p-0 dark:text-white md:dark:hover:text-orange-900">
+              <a 
+                href="#" 
+                className="block py-2 px-3 text-gray-900 rounded-sm hover:bg-gray-100 md:hover:bg-transparent md:hover:text-orange-900 md:p-0 dark:text-white md:dark:hover:text-orange-900"
+              >
                 About
               </a>
             </li>
             <li>
-              <a href="#" className="block py-2 px-3 text-gray-900 rounded-sm hover:bg-gray-100 md:hover:bg-transparent md:hover:text-orange-900 md:p-0 dark:text-white md:dark:hover:text-orange-900">
+              <a 
+                href="#" 
+                className="block py-2 px-3 text-gray-900 rounded-sm hover:bg-gray-100 md:hover:bg-transparent md:hover:text-orange-900 md:p-0 dark:text-white md:dark:hover:text-orange-900"
+              >
                 Services
               </a>
             </li>
             <li>
-              <a href="#" className="block py-2 px-3 text-gray-900 rounded-sm hover:bg-gray-100 md:hover:bg-transparent md:hover:text-orange-900 md:p-0 dark:text-white md:dark:hover:text-orange-900">
+              <a 
+                href="#" 
+                className="block py-2 px-3 text-gray-900 rounded-sm hover:bg-gray-100 md:hover:bg-transparent md:hover:text-orange-900 md:p-0 dark:text-white md:dark:hover:text-orange-900"
+              >
                 Pricing
               </a>
             </li>
             <li>
-              <a href="#" className="block py-2 px-3 text-gray-900 rounded-sm hover:bg-gray-100 md:hover:bg-transparent md:hover:text-orange-900 md:p-0 dark:text-white md:dark:hover:text-orange-900">
+              <a 
+                href="#" 
+                className="block py-2 px-3 text-gray-900 rounded-sm hover:bg-gray-100 md:hover:bg-transparent md:hover:text-orange-900 md:p-0 dark:text-white md:dark:hover:text-orange-900"
+              >
                 Contact
               </a>
             </li>
@@ -77,11 +120,35 @@ const Navbar = () => {
             )}
           </button>
 
-          {/* Profile Section */}
-          <button className="flex text-sm bg-orange-900 rounded-full focus:ring-4 focus:ring-orange-900 dark:focus:ring-orange-900">
-            <span className="sr-only">Open user menu</span>
-            <img className="w-8 h-8 rounded-full" src="../src/assets/images.png" alt="User Profile" />
-          </button>
+          {/* Profile Section with Dropdown */}
+          <div className="relative flex items-center">
+            <button 
+              onClick={handleProfileClick} 
+              className="flex text-sm bg-orange-900 rounded-full focus:ring-4 focus:ring-orange-900 dark:focus:ring-orange-900"
+            >
+              <span className="sr-only">Open user menu</span>
+              <img className="w-8 h-8 rounded-full" src="../src/assets/images.png" alt="User Profile" />
+            </button>
+            {/* Show username next to the profile image if available */}
+            {username && <span className="ml-2 text-white font-medium">{username}</span>}
+
+            {dropdownOpen && (
+              <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-2 z-20">
+                <button 
+                  onClick={handleLogin} 
+                  className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-200"
+                >
+                  Login
+                </button>
+                <button 
+                  onClick={handleLogout} 
+                  className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-200"
+                >
+                  Logout
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </nav>

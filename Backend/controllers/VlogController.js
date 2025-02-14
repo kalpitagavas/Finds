@@ -6,26 +6,67 @@ const Vlog = require("../models/Vlog");
  */
 const createVlog = async (req, res) => {
   try {
-    const { title, description, videoUrl, productImages, affiliateLinks } = req.body;
+    const { 
+      title, 
+      description, 
+      videoUrl, 
+      productImages, 
+      affiliateLinks,
+      videoFileUrl,     // optional
+      thumbnail,        // optional
+      duration          // optional
+    } = req.body;
 
-    // Create a new Vlog document.
+    // Validate required fields
+    if (!title || !description || !videoUrl) {
+      return res.status(400).json({
+        message: "Title, description, and video URL are required."
+      });
+    }
+
+    // Ensure productImages is an array (or default to an empty array)
+    const imagesArray = Array.isArray(productImages) ? productImages : [];
+
+    // Ensure affiliateLinks is an array and each entry has title & url (default values provided)
+    const linksArray = Array.isArray(affiliateLinks)
+      ? affiliateLinks.map(link => ({
+          title: link.title || "Untitled",
+          url: link.url || "#",
+          clicks: link.clicks || 0,
+        }))
+      : [];
+
+    // Create a new Vlog document
+    // If req.user is not available, you'll need to handle it (or remove the author field from the schema)
     const newVlog = new Vlog({
       title,
       description,
       videoUrl,
-      productImages,    // This should be an array of image URLs.
-      affiliateLinks,   // This should be an array of objects, e.g., [{ title, url, clicks }]
+      videoFileUrl,    // optional, may be undefined
+      thumbnail,       // optional, may be undefined
+      duration,        // optional, may be undefined
+      productImages: imagesArray,
+      affiliateLinks: linksArray,
+      // author: req.user ? req.user._id : null // set author from authenticated user, or handle appropriately
     });
 
-    // Save the vlog to the database.
+    // Save the vlog to the database
     const savedVlog = await newVlog.save();
 
-    res.status(201).json({ message: "Vlog created successfully", vlog: savedVlog });
+    return res.status(201).json({
+      message: "Vlog created successfully",
+      vlog: savedVlog
+    });
   } catch (error) {
     console.error("Error creating vlog:", error);
-    res.status(500).json({ message: "Error creating vlog", error: error.message });
+    return res.status(500).json({
+      message: "Error creating vlog",
+      error: error.message
+    });
   }
 };
+
+
 
 /**
  * Get all Vlogs.

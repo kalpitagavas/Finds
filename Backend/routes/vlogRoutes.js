@@ -9,7 +9,7 @@ router.get("/", getAllVlogs);
 router.get("/:id", getVlogById);
 
 // Admin-only routes: Only admins can create, update, or delete vlogs
-router.post("/", authMiddleware, adminMiddleware, createVlog);
+router.post("/create", authMiddleware, createVlog);
 router.put("/:id", authMiddleware, adminMiddleware, updateVlog);
 router.delete("/:id", authMiddleware, adminMiddleware, deleteVlog);
 
