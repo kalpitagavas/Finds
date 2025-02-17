@@ -8,7 +8,7 @@ const UserSchema = new mongoose.Schema({
     profilePic: { type: String }, // URL for profile picture (optional)
     isVerified: { type: Boolean, default: false }, // Email verification status
     verificationToken: { type: String }, // Token for email verification
-    savedVlogs: [{ type: mongoose.Schema.Types.ObjectId, ref: "Vlog" }], // Users can save vlogs
+    savedProduct: [{ type: mongoose.Schema.Types.ObjectId, ref: "Product" }], // Users can save vlogs
     affiliateClicks: [{ type: mongoose.Schema.Types.ObjectId, ref: "AffiliateClick" }], // Track affiliate clicks
     lastLogin: { type: Date }, // Store last login timestamp
     status: { type: String, enum: ["active", "banned", "inactive"], default: "active" }

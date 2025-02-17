@@ -9,36 +9,41 @@ require("dotenv").config();
  */
 const registerUser = async (req, res) => {
   try {
-    const { username, email, password } = req.body;
+    const { username, email, password, adminSecretKey } = req.body;
 
-    // Ensure required fields are provided.
+    console.log("🔹 Received Data:", { username, email, adminSecretKey }); // Debugging
+
     if (!username || !email || !password) {
-      return res.status(400).json({ message: "Username, email, and password are required." });
+      return res.status(400).json({ message: "All fields are required." });
     }
 
-    // Check if a user with the same email already exists.
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(400).json({ message: "User with this email already exists." });
+      return res.status(400).json({ message: "User already exists." });
     }
 
-    // Hash the password.
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create a new user document.
-    const newUser = new User({
-      username,
-      email,
-      password: hashedPassword,
-    });
+    // Default role
+    let role = "user";
 
-    // Save the user to the database.
+    // Check if the admin secret key matches
+    console.log("🔹 Checking Admin Secret Key...");
+    if (adminSecretKey && adminSecretKey === process.env.ADMIN_SECRET_KEY) {
+      role = "admin";
+      console.log("✅ Admin Key Matched! Assigning Role: ADMIN");
+    } else {
+      console.log("❌ Admin Key Mismatch! Assigning Role: USER");
+    }
+
+    const newUser = new User({ username, email, password: hashedPassword, role });
+
     await newUser.save();
+    console.log("✅ User Registered:", newUser);
 
     res.status(201).json({ message: "User registered successfully", user: newUser });
   } catch (error) {
-    console.error("Error in registerUser:", error);
+    console.error("❌ Error in registerUser:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };

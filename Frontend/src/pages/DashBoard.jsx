@@ -1,6 +1,7 @@
 import CarouselComponent from "../components/CarouselComponent";
 import VlogCard from "../components/VlogCard";
 import { useEffect, useState } from "react";
+import Navbar from "./Navbar";
 const Dashboard = () => {
   const [darkMode, setDarkMode] = useState(localStorage.getItem('theme') === 'dark');
 
@@ -13,7 +14,8 @@ const Dashboard = () => {
     }
   }, [darkMode]);
     return (
-    <div className="bg-white dark:bg-gray-900 m-h-screen text-gray-900 dark:text-white -mt-">
+    <div className="bg-white dark:bg-gray-900 m-h-screen text-gray-900 dark:text-white">
+       <Navbar/> {/* Removed the extra '<' */}
       <CarouselComponent />
      <VlogCard/>
     </div>

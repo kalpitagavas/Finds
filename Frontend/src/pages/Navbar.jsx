@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { useNavigate,Link } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 const Navbar = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(localStorage.getItem('theme') === 'dark');
   const [username, setUsername] = useState("");
+  const [userRole, setUserRole] = useState(""); // Track user role
   const navigate = useNavigate();
 
   // Toggle dropdown visibility
@@ -19,8 +20,9 @@ const Navbar = () => {
 
   // Handle Logout click: perform logout logic then redirect
   const handleLogout = () => {
-    // For example, clear username and other tokens:
+    // For example, clear username, role, and other tokens:
     localStorage.removeItem("username");
+    localStorage.removeItem("role");
     navigate('/login');
   };
 
@@ -39,11 +41,15 @@ const Navbar = () => {
     setDarkMode(!darkMode);
   };
 
-  // Retrieve username from localStorage when Navbar mounts
+  // Retrieve username and role from localStorage when Navbar mounts
   useEffect(() => {
     const storedUsername = localStorage.getItem("username");
+    const storedRole = localStorage.getItem("role"); // Retrieve user role (admin or user)
     if (storedUsername) {
       setUsername(storedUsername);
+    }
+    if (storedRole) {
+      setUserRole(storedRole); // Set user role
     }
   }, []);
 
@@ -70,38 +76,7 @@ const Navbar = () => {
                 Home
               </Link>
             </li>
-            <li>
-              <a 
-                href="#" 
-                className="block py-2 px-3 text-gray-900 rounded-sm hover:bg-gray-100 md:hover:bg-transparent md:hover:text-orange-900 md:p-0 dark:text-white md:dark:hover:text-orange-900"
-              >
-                About
-              </a>
-            </li>
-            <li>
-              <a 
-                href="#" 
-                className="block py-2 px-3 text-gray-900 rounded-sm hover:bg-gray-100 md:hover:bg-transparent md:hover:text-orange-900 md:p-0 dark:text-white md:dark:hover:text-orange-900"
-              >
-                Services
-              </a>
-            </li>
-            <li>
-              <a 
-                href="#" 
-                className="block py-2 px-3 text-gray-900 rounded-sm hover:bg-gray-100 md:hover:bg-transparent md:hover:text-orange-900 md:p-0 dark:text-white md:dark:hover:text-orange-900"
-              >
-                Pricing
-              </a>
-            </li>
-            <li>
-              <a 
-                href="#" 
-                className="block py-2 px-3 text-gray-900 rounded-sm hover:bg-gray-100 md:hover:bg-transparent md:hover:text-orange-900 md:p-0 dark:text-white md:dark:hover:text-orange-900"
-              >
-                Contact
-              </a>
-            </li>
+            {/* Other Links */}
           </ul>
         </div>
 
@@ -133,7 +108,16 @@ const Navbar = () => {
             {username && <span className="ml-2 text-white font-medium">{username}</span>}
 
             {dropdownOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-2 z-20">
+              <div className="absolute right-0 mt-44 w-48 bg-white rounded-md shadow-lg py-2 z-20">
+                {/* Conditionally render Admin Dashboard for Admin role */}
+                {userRole === "admin" && (
+                  <button
+                    onClick={() => navigate("/admin-dashboard")}
+                    className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-200"
+                  >
+                    Admin Dashboard
+                  </button>
+                )}
                 <button 
                   onClick={handleLogin} 
                   className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-200"

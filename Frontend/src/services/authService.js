@@ -2,8 +2,9 @@ import axios from "axios";
 
 const API_URL = "http://localhost:8080/api/users/";
 
-const Register = (username, email, password) => {
-    return axios.post(`${API_URL}register`, { username, email, password });
+// Modify Register function to accept the adminSecretKey
+const Register = (username, email, password, adminSecretKey = "") => {
+    return axios.post(`${API_URL}register`, { username, email, password, adminSecretKey });
 };
 
 const Login = (email, password) => {
