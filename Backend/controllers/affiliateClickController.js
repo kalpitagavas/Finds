@@ -1,46 +1,56 @@
-const AffiliateClick=require("../models/AffiliateClick");
+const AffiliateClick = require("../models/AffiliateClick");
+const Product = require("../models/Product");
 
-const trackClicks=async(req,res)=>{
-    try{
-        const { vlogId, affiliateUrl, referrerUrl, deviceType } =req.body;
-        // Extract the IP address from the request (works in most cases)
-        const ipAddress =req.ip;
-        const newClick=new AffiliateClick({
-            vlogId,
-            userId: req.user ? req.user.id : null,
-            affiliateUrl,
-            ipAddress,
-            referrerUrl,
-            deviceType
-        })
-        await newClick.save();
-        res.status(201).json({message:"Affiliate click tracked successfully",  click: newClick,})
-    }
-    catch(error){
-        res.status(500).json({message:"error in trackingClicks for Affiliate Links",error: error.message})
-    }
 
-}
-// Get all affiliate clicks for a given vlog
-const getClicksByVlog = async(req,res)=>{
-    try{
-        const { vlogId } = req.params;
-        const clicks=await AffiliateClick.find({vlogId}).populate("userid","username email");
-        res.status(201).json({count:clicks.length,clicks});
-    }
-    catch(error){
-        res.status(500).json({message:"error in getClicksByVlog for Affiliate",error:error.message});
-    }
-}
-
-// Get all affiliate clicks for a specific user
-const getClicksByUser = async (req, res) => {
+const trackClicks = async (req, res) => {
+    const { productId, deviceType, affiliateUrl } = req.body; // Extract data from request body
+    const userId = req.user._id; // Assuming the user is authenticated
+  
     try {
-      const { userId } = req.params;
-      const clicks = await AffiliateClick.find({ userId }).populate("vlogId", "title description");
-      res.status(200).json({ count: clicks.length, clicks });
+      // Find the product by its ID
+      const product = await Product.findById(productId);
+  
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+  
+      // Optionally update the product with the affiliate URL (if you want to store it in the product record)
+      if (affiliateUrl) {
+        product.affiliateUrl = affiliateUrl;
+        await product.save();
+      }
+  
+      // Create a new affiliate click entry
+      const newClick = new AffiliateClick({
+        user: userId,
+        product: productId,
+        deviceType: deviceType || "desktop",  // Default to desktop if no device type is provided
+        affiliateUrl: affiliateUrl,  // The URL the user will be redirected to
+      });
+  
+      // Save the new click to the database
+      await newClick.save();
+  
+      // Redirect the user to the affiliate URL
+      return res.redirect(affiliateUrl);
     } catch (error) {
-      res.status(500).json({ message: "Error fetching user clicks", error: error.message });
+      console.error("Error tracking affiliate click:", error);
+      return res.status(500).json({ message: "Error tracking click", error: error.message });
     }
   };
-module.exports={trackClicks,getClicksByVlog,getClicksByUser};
+
+  const getAllClicks = async (req, res) => {
+    try {
+      const clicks = await AffiliateClick.find()
+        .populate("user", "username") // To get the username of the user who clicked
+        .populate("product", "name price affiliateUrl") // To get product name, price, and affiliate URL
+        .exec();
+  
+      return res.json(clicks);
+    } catch (error) {
+      console.error("Error fetching affiliate clicks:", error);
+      return res.status(500).json({ message: "Error fetching affiliate clicks" });
+    }
+  };
+
+module.exports = { trackClicks,getAllClicks };

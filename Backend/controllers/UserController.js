@@ -2,130 +2,178 @@ const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
+const multer = require("multer");
+const path = require("path");
 
-/**
- * Register a new user.
- * Expects a request body with: { username, email, password }
- */
+
+// Configure multer for file storage
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "./uploads"); // Directory where files will be stored
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname)); // Filename with timestamp to avoid duplicates
+  },
+});
+
+const upload = multer({ storage }).single("profilePhoto"); 
+// Register a new user
 const registerUser = async (req, res) => {
-  try {
-    const { username, email, password, adminSecretKey } = req.body;
-
-    console.log("🔹 Received Data:", { username, email, adminSecretKey }); // Debugging
-
-    if (!username || !email || !password) {
-      return res.status(400).json({ message: "All fields are required." });
+  upload(req, res, async (err) => {
+    if (err) {
+      return res.status(400).json({ message: "File upload error", error: err.message });
     }
 
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ message: "User already exists." });
+    try {
+      const { username, email, password, adminSecretKey } = req.body;
+
+      if (!username || !email || !password) {
+        return res.status(400).json({ message: "All fields are required." });
+      }
+
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        return res.status(400).json({ message: "User already exists." });
+      }
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      // Default role
+      let role = "user";
+
+      // Check if the admin secret key matches
+      if (adminSecretKey && adminSecretKey === process.env.ADMIN_SECRET_KEY) {
+        role = "admin";
+      }
+
+      // Handle the profile picture upload
+      const profilePic = req.file ? `/uploads/${req.file.filename}` : null;
+
+      const newUser = new User({ username, email, password: hashedPassword, role, profilePic });
+
+      await newUser.save();
+
+      res.status(201).json({ message: "User registered successfully", user: { ...newUser._doc, profilePic } });
+    } catch (error) {
+      res.status(500).json({ message: "Server error", error: error.message });
     }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Default role
-    let role = "user";
-
-    // Check if the admin secret key matches
-    console.log("🔹 Checking Admin Secret Key...");
-    if (adminSecretKey && adminSecretKey === process.env.ADMIN_SECRET_KEY) {
-      role = "admin";
-      console.log("✅ Admin Key Matched! Assigning Role: ADMIN");
-    } else {
-      console.log("❌ Admin Key Mismatch! Assigning Role: USER");
-    }
-
-    const newUser = new User({ username, email, password: hashedPassword, role });
-
-    await newUser.save();
-    console.log("✅ User Registered:", newUser);
-
-    res.status(201).json({ message: "User registered successfully", user: newUser });
-  } catch (error) {
-    console.error("❌ Error in registerUser:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
-  }
+  });
 };
 
-/**
- * Log in a user.
- * Expects a request body with: { email, password }
- * Returns a JWT token if credentials are valid.
- */
+// Login a user
 const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Ensure email and password are provided.
-    if (!email || !password) {
+    if (!email ||!password) {
       return res.status(400).json({ message: "Email and password are required." });
     }
 
-    // Find the user by email.
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(400).json({ message: "Invalid credentials." });
     }
 
-    // Compare the provided password with the stored hashed password.
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(400).json({ message: "Invalid credentials." });
     }
 
-    // Create a JWT payload.
+    // Create a JWT payload
     const payload = { id: user._id, role: user.role };
 
-    // Sign the token with a secret key.
+    // Sign the token with a secret key
     const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "7d" });
+
+    // Update the last login timestamp and status
+    user.lastLogin = new Date();
+    user.isOnline = true;
+    user.status = "active";
+    await user.save();
 
     res.status(200).json({ token, user });
   } catch (error) {
-    console.error("Error in loginUser:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
-/**
- * Get the profile of the authenticated user.
- * Assumes that an authentication middleware sets req.user.
- */
+// Get user profile
 const getUserProfile = async (req, res) => {
   try {
-    // Find the user by ID and exclude the password field.
     const user = await User.findById(req.user.id).select("-password");
     if (!user) {
       return res.status(404).json({ message: "User not found." });
     }
     res.status(200).json(user);
   } catch (error) {
-    console.error("Error in getUserProfile:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
-
-
-/**
- * Update the profile of the authenticated user.
- * Expects a request body with any of the following fields: { username, email, profilePic }
- */
 const updateUserProfile = async (req, res) => {
+  upload(req, res, async (err) => {
+    if (err) {
+      return res.status(400).json({ message: "File upload error", error: err.message });
+    }
+
+    try {
+      const { username, email } = req.body;
+
+      if (email) {
+        const emailExists = await User.findOne({ email });
+        if (emailExists && emailExists._id.toString() !== req.user.id.toString()) {
+          return res.status(400).json({ message: "Email is already in use." });
+        }
+      }
+
+      if (username) {
+        const usernameExists = await User.findOne({ username });
+        if (usernameExists && usernameExists._id.toString() !== req.user.id.toString()) {
+          return res.status(400).json({ message: "Username is already taken." });
+        }
+      }
+
+      const updateData = {};
+      if (username) updateData.username = username;
+      if (email) updateData.email = email;
+
+      // If a new profile picture is uploaded, set the profilePic field
+      if (req.file) {
+        updateData.profilePic = `/uploads/${req.file.filename}`;
+      }
+
+      const updatedUser = await User.findByIdAndUpdate(req.user.id, updateData, { new: true }).select("-password");
+
+      res.status(200).json({ message: "User profile updated successfully", user: { ...updatedUser._doc, profilePic: updateData.profilePic } });
+    } catch (error) {
+      res.status(500).json({ message: "Server error", error: error.message });
+    }
+  });
+};
+
+// Logout a user
+const logoutUser = async (req, res) => {
   try {
-    const { username, email, profilePic } = req.body;
-    // Build an update object with only the fields that were provided.
-    const updateData = {};
-    if (username) updateData.username = username;
-    if (email) updateData.email = email;
-    if (profilePic) updateData.profilePic = profilePic;
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
 
-    // Update the user record.
-    const updatedUser = await User.findByIdAndUpdate(req.user.id, updateData, { new: true }).select("-password");
+    // Update the user status and last logout time
+    user.isOnline = false;
+    user.status = "offline";
+    user.lastLogout = new Date();
+    await user.save();
 
-    res.status(200).json({ message: "User profile updated successfully", user: updatedUser });
+    res.status(200).json({ message: "User logged out successfully" });
   } catch (error) {
-    console.error("Error in updateUserProfile:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
-module.exports={registerUser,loginUser,getUserProfile,updateUserProfile}
+
+module.exports = {
+  registerUser,
+  loginUser,
+  getUserProfile,
+  updateUserProfile,
+  logoutUser,
+};

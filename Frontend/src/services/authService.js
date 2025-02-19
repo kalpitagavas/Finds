@@ -2,9 +2,18 @@ import axios from "axios";
 
 const API_URL = "http://localhost:8080/api/users/";
 
-// Modify Register function to accept the adminSecretKey
+// Modify Register function to accept the adminSecretKey and profile photo
 const Register = (username, email, password, adminSecretKey = "") => {
     return axios.post(`${API_URL}register`, { username, email, password, adminSecretKey });
+};
+
+// RegisterWithPhoto - New function to handle profile photo
+const RegisterWithPhoto = (formData) => {
+    return axios.post(`${API_URL}register`, formData, {
+        headers: {
+            "Content-Type": "multipart/form-data", // This tells the server we're sending form data
+        },
+    });
 };
 
 const Login = (email, password) => {
@@ -22,4 +31,4 @@ const CheckUserExists = async (email) => {
     }
 };
 
-export default { Register, Login, CheckUserExists };
+export default { Register, RegisterWithPhoto, Login, CheckUserExists };

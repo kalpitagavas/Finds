@@ -2,6 +2,7 @@ import CarouselComponent from "../components/CarouselComponent";
 import VlogCard from "../components/VlogCard";
 import { useEffect, useState } from "react";
 import Navbar from "./Navbar";
+import Footer from "./Footer";
 const Dashboard = () => {
   const [darkMode, setDarkMode] = useState(localStorage.getItem('theme') === 'dark');
 
@@ -18,6 +19,7 @@ const Dashboard = () => {
        <Navbar/> {/* Removed the extra '<' */}
       <CarouselComponent />
      <VlogCard/>
+     <Footer/>
     </div>
   );
 };

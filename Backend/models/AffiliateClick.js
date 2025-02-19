@@ -1,14 +1,14 @@
-const mongoose=require("mongoose");
-require("dotenv").config();
 
-const AffiliateClickSchema =new mongoose.Schema({
-    vlogId: { type: mongoose.Schema.Types.ObjectId, ref: "Vlog", required: true }, 
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
-    affiliateUrl: { type: String, required: true },
-    referrerUrl: { type: String },
-    deviceType: { type: String, enum: ["mobile", "desktop", "tablet"], default: "desktop" },
-    ipAddress: { type: String }
- }, { timestamps: true } );
-const AffiliateClick =mongoose.model("AffiliateClick",AffiliateClickSchema);
+
+const mongoose = require("mongoose");
+
+const affiliateClickSchema = new mongoose.Schema({
+  user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  product: { type: mongoose.Schema.Types.ObjectId, ref: "Product", required: true },
+ deviceType: { type: String, enum: ["mobile", "desktop", "tablet"], default: "desktop" },
+  affiliateUrl: { type: String, required: true },
+  clickedAt: { type: Date, default: Date.now },  // Timestamp of the click
+},{ timestamps: true } );
+
+const AffiliateClick= mongoose.model("AffiliateClick", affiliateClickSchema);
 module.exports = AffiliateClick;
-

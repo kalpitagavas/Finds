@@ -25,6 +25,7 @@ app.use("/api/vlogs", vlogRoutes);
 app.use("/api/clicks", affiliateClickRoutes);
 app.use("/api/admin", productRoutes);
 app.use("/api/user", userProductRoutes);
+
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
