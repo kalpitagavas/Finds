@@ -1,21 +1,21 @@
 const express = require("express");
 const Product = require("../models/Product");
-const router = express.Router();
 const multer = require("multer");
 const fs = require("fs");
 const path = require("path");
 
-// Set up Multer storage to save files in the 'uploads' directory
+const router = express.Router();
+
+// Set up Multer storage for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, "uploads/"); // Ensure this folder exists in your project root
   },
   filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname)); // Unique filename with timestamp
+    cb(null, `${Date.now()}-${file.originalname}`);
   },
 });
 
-// Set up multer middleware to handle multiple file uploads
 const upload = multer({ storage: storage });
 
 // GET: Fetch all products
@@ -24,68 +24,97 @@ router.get("/products", async (req, res) => {
     const products = await Product.find();
     res.json(products);
   } catch (error) {
-    res.status(500).json({ message: "Error fetching products" });
+    console.error("Error fetching products:", error);
+    res.status(500).json({ message: "Error fetching products", error: error.message });
   }
 });
 
 // POST: Create a new product with image and video uploads
 router.post("/products", upload.fields([{ name: "images", maxCount: 5 }, { name: "videos", maxCount: 2 }]), async (req, res) => {
   try {
-    const imagePaths = req.files["images"] ? req.files["images"].map((file) => file.path) : [];
-    const videoPaths = req.files["videos"] ? req.files["videos"].map((file) => file.path) : [];
+    const { name, price, description, category } = req.body;
 
-    const newProduct = new Product({
-      ...req.body,
+    // Handle files
+    const imagePaths = req.files["images"] ? req.files["images"].map(file => file.path) : [];
+    const videoPaths = req.files["videos"] ? req.files["videos"].map(file => file.path) : [];
+
+    // Create the product
+    const product = new Product({
+      name,
+      price,
+      description,
+      category,
       images: imagePaths,
       videos: videoPaths,
     });
 
-    await newProduct.save();
-    res.status(201).json(newProduct);
+    await product.save();
+    res.status(201).json(product);
   } catch (error) {
-    console.error("Error in product creation:", error);
-    res.status(500).json({ message: "Error creating product", error });
+    console.error("Error creating product:", error);
+    res.status(500).json({ message: "Error creating product", error: error.message });
   }
 });
 
 // PUT: Update a product with image and video handling
+// PUT: Update a product with image and video handling
 router.put("/products/:id", upload.fields([{ name: "images", maxCount: 5 }, { name: "videos", maxCount: 2 }]), async (req, res) => {
   try {
-    const { name, price, description, status,category  } = req.body;
     let product = await Product.findById(req.params.id);
-
     if (!product) {
       return res.status(404).json({ message: "Product not found" });
     }
 
-    // Handle images and videos
-    const existingImages = req.body.existingImages ? [].concat(req.body.existingImages) : [];
-    const existingVideos = req.body.existingVideos ? [].concat(req.body.existingVideos) : [];
+    // Parse input values
+    const fieldsToUpdate = {
+      name: req.body.name,
+      price: req.body.price,
+      description: req.body.description,
+      status: req.body.status,
+      category: req.body.category,
+      specifications: req.body.specifications || product.specifications,
+      benefits: req.body.benefits || product.benefits,
+      discount: req.body.discount || product.discount,
+      tags: req.body.tags ? req.body.tags.split(",").map(tag => tag.trim()) : product.tags,
+      buyLink: req.body.buyLink || product.buyLink,
+      brand: req.body.brand || product.brand,
+      rating: req.body.rating || product.rating,
+      reviewsCount: req.body.reviewsCount || product.reviewsCount,
+      customerReviews: req.body.customerReviews ? JSON.parse(req.body.customerReviews) : product.customerReviews,
+    };
 
+    // Handle existing and removed files
+    const existingImages = req.body.existingImages ? [].concat(req.body.existingImages) : product.images;
+    const existingVideos = req.body.existingVideos ? [].concat(req.body.existingVideos) : product.videos;
     const removedImages = req.body.removedImages ? [].concat(req.body.removedImages) : [];
     const removedVideos = req.body.removedVideos ? [].concat(req.body.removedVideos) : [];
 
-    // Remove deleted images and videos from storage
-    removedImages.forEach((imagePath) => fs.unlink(imagePath, (err) => err && console.error("Error deleting image:", err)));
-    removedVideos.forEach((videoPath) => fs.unlink(videoPath, (err) => err && console.error("Error deleting video:", err)));
+    // Delete removed files from the file system
+    [...removedImages, ...removedVideos].forEach((file) => {
+      const filePath = path.resolve(file);
+      if (fs.existsSync(filePath)) {
+        fs.unlink(filePath, (err) => {
+          if (err) console.error("Error deleting file:", err);
+        });
+      }
+    });
 
-    // Add new images and videos
-    const newImages = req.files["images"] ? req.files["images"].map((file) => file.path) : [];
-    const newVideos = req.files["videos"] ? req.files["videos"].map((file) => file.path) : [];
+    // Handle new files
+    const newImages = req.files?.images?.map(file => file.path) || [];
+    const newVideos = req.files?.videos?.map(file => file.path) || [];
 
-    product.name = name;
-    product.price = price;
-    product.description = description;
-    product.status = status;
-    product.category = category; 
-    product.images = [...existingImages.filter((img) => !removedImages.includes(img)), ...newImages];
-    product.videos = [...existingVideos.filter((vid) => !removedVideos.includes(vid)), ...newVideos];
+    // Update product fields with new and existing files
+    product.set({
+      ...fieldsToUpdate,
+      images: [...existingImages.filter(img => !removedImages.includes(img)), ...newImages],
+      videos: [...existingVideos.filter(vid => !removedVideos.includes(vid)), ...newVideos],
+    });
 
     await product.save();
     res.json(product);
   } catch (error) {
     console.error("Error updating product:", error);
-    res.status(500).json({ message: "Error updating product" });
+    res.status(500).json({ message: "Error updating product", error: error.message });
   }
 });
 
@@ -93,17 +122,25 @@ router.put("/products/:id", upload.fields([{ name: "images", maxCount: 5 }, { na
 router.delete("/products/:id", async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
-    if (!product) return res.status(404).json({ message: "Product not found" });
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
 
-    [...product.images, ...product.videos].forEach((file) =>
-      fs.unlink(file, (err) => err && console.error("Error deleting file:", err))
-    );
+    // Delete images and videos from filesystem
+    [...product.images, ...product.videos].forEach((file) => {
+      const filePath = path.resolve(file);
+      if (fs.existsSync(filePath)) {
+        fs.unlink(filePath, (err) => {
+          if (err) console.error("Error deleting file:", err);
+        });
+      }
+    });
 
     await Product.findByIdAndDelete(req.params.id);
     res.json({ message: "Product deleted successfully" });
   } catch (error) {
     console.error("Error deleting product:", error);
-    res.status(500).json({ message: "Error deleting product" });
+    res.status(500).json({ message: "Error deleting product", error: error.message });
   }
 });
 
