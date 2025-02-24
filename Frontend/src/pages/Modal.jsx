@@ -1,91 +1,46 @@
-import { useState, useEffect, useRef } from "react";
+import React from 'react';
 
 const Modal = ({ product, onClose }) => {
-  const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
-  const media = [...product.images, ...product.videos];
-  const videoRef = useRef(null);
-
-  useEffect(() => {
-    let interval;
-
-    // If the current media is an image, change every 3 seconds
-    if (!media[currentMediaIndex].includes(".mp4")) {
-      interval = setInterval(() => {
-        setCurrentMediaIndex((prevIndex) => (prevIndex < media.length - 1 ? prevIndex + 1 : 0));
-      }, 3000);
-    } else {
-      // If the current media is a video, wait until it ends before switching
-      const video = videoRef.current;
-      if (video) {
-        video.onended = () => {
-          setCurrentMediaIndex((prevIndex) => (prevIndex < media.length - 1 ? prevIndex + 1 : 0));
-        };
-      }
-    }
-
-    return () => clearInterval(interval);
-  }, [currentMediaIndex, media.length]);
-
-  const handleNext = () => {
-    setCurrentMediaIndex((prevIndex) => (prevIndex < media.length - 1 ? prevIndex + 1 : 0));
-  };
-
-  const handlePrev = () => {
-    setCurrentMediaIndex((prevIndex) => (prevIndex > 0 ? prevIndex - 1 : media.length - 1));
-  };
-
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50">
-      <div className="absolute inset-0 bg-black opacity-50" onClick={onClose}></div>
-      <div className="bg-white rounded-lg p-6 z-10 max-w-lg mx-auto relative">
-        <button className="absolute top-2 right-2 text-gray-700 hover:text-gray-900" onClick={onClose}>
-          ✖
-        </button>
+    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+      <div className="relative bg-white dark:bg-gray-800 p-6 rounded-xl w-11/12 md:w-1/2 max-h-[80vh] overflow-y-auto shadow-xl transform transition-all duration-300">
         
-        <h2 className="text-2xl font-bold mb-4 text-center">{product.name}</h2>
-
-        {/* Display Image or Video */}
-        <div className="relative">
-          {media[currentMediaIndex].includes(".mp4") ? (
-            <video
-              ref={videoRef}
-              className="w-full h-64 object-cover rounded mb-4"
-              controls
-              autoPlay
-              muted
-            >
-              <source src={`http://localhost:8080/${media[currentMediaIndex]}`} type="video/mp4" />
-              Your browser does not support the video tag.
-            </video>
-          ) : (
-            <img
-              src={`http://localhost:8080/${media[currentMediaIndex]}`}
-              alt={product.name}
-              className="w-full h-64 object-cover rounded mb-4"
-            />
-          )}
-
-          {/* Navigation Buttons */}
-          {media.length > 1 && (
-            <>
-              <button
-                className="absolute top-1/2 left-2 text-white text-2xl bg-black bg-opacity-50 px-2 py-1 rounded"
-                onClick={handlePrev}
-              >
-                ❮
-              </button>
-              <button
-                className="absolute top-1/2 right-2 text-white text-2xl bg-black bg-opacity-50 px-2 py-1 rounded"
-                onClick={handleNext}
-              >
-                ❯
-              </button>
-            </>
-          )}
+        {/* Fixed Header with Title and Close Button */}
+        <div className="absolute top-0 left-0 right-0 p-4 flex justify-between items-center bg-white dark:bg-gray-800 z-10 border-b border-gray-300 dark:border-gray-700">
+          <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
+            Product Details
+          </h2>
+          <button
+            onClick={onClose}
+            className="text-gray-600 dark:text-gray-300 text-3xl hover:text-red-500"
+          >
+            &times;
+          </button>
         </div>
 
-        <p className="text-gray-700 mb-4">{product.description}</p>
-        <p className="text-xl font-semibold text-gray-900 mb-4">${product.price}</p>
+        {/* Main Content Area (Product Details) */}
+        <div className="mt-16">
+          <img
+            src={`http://localhost:8080/${product.images[0]}`}
+            alt={product.name}
+            className="w-full h-64 object-cover rounded-lg"
+          />
+          <h3 className="text-2xl font-semibold text-gray-900 mt-4">{product.name}</h3>
+          <p className="text-gray-500 mt-2">{product.description}</p>
+          <p className="text-xl font-semibold text-gray-900 mt-4">Rs.{product.price}</p>
+
+          {/* Affiliate Link Button */}
+          {product.buyLink && (
+            <a
+              href={product.buyLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 inline-block bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700"
+            >
+              Buy Now
+            </a>
+          )}
+        </div>
       </div>
     </div>
   );

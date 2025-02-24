@@ -9,6 +9,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import TrackClick from "./pages/TrackClick";
 import ViewClicks from "./pages/ViewClicks";
 import Deals from "./pages/Deals";
+import AffiliateClicksDashboard from "./admin/AffiliateClicksDashboard";
 
 
 export default function App() {
@@ -23,6 +24,9 @@ export default function App() {
         <Route path="/Dashboard" element={<Dashboard />} />
 
         <Route path="/admin-dashboard" element={<AdminDashboard />} />
+       
+        <Route path="affiliate-clicks" element={<AffiliateClicksDashboard />} />
+    
         <Route path="/track-click" element={<TrackClick />} />
         <Route path="/view-clicks" element={<ViewClicks />} />
         <Route path="/deals" element={<Deals />} />

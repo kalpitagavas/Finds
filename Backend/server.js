@@ -5,6 +5,7 @@ const vlogRoutes = require("../Backend/routes/vlogRoutes");
 const affiliateClickRoutes = require("../Backend/routes/affiliateClickRoutes");
 const productRoutes = require("./routes/productRoutes.js");
 const userProductRoutes = require("./routes/userProductRoutes.js");
+const { trackClicks, getAllClicks } = require('./controllers/affiliateClickController.js');
 const app = express();
 const port = process.env.PORT || 8080;
 
@@ -22,9 +23,11 @@ app.use('/uploads', express.static('uploads'));
 // Mount routes
 app.use("/api/users", userRoutes);
 app.use("/api/vlogs", vlogRoutes);
-app.use("/api/clicks", affiliateClickRoutes);
+app.use("/api", affiliateClickRoutes);
 app.use("/api/admin", productRoutes);
 app.use("/api/user", userProductRoutes);
+
+
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);

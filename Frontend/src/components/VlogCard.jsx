@@ -69,7 +69,6 @@ const VlogCard = () => {
               <video
                 className="w-full h-64 object-cover rounded-t-lg"
                 controls
-                
               >
                 <source src={`http://localhost:8080/${product.videos[0]}`} type="video/mp4" />
                 Your browser does not support the video tag.
@@ -91,6 +90,18 @@ const VlogCard = () => {
                   </h3>
                   <p className="text-gray-500 mt-2 text-sm">{product.description}</p>
                   <p className="text-xl font-semibold text-gray-900 mt-4">Rs.{product.price}</p>
+
+                  {/* Affiliate Link Button */}
+                  {product.buyLink && (
+                    <a
+                      href={product.buyLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-4 inline-block bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700"
+                    >
+                      Buy Now
+                    </a>
+                  )}
                 </div>
               </div>
             );

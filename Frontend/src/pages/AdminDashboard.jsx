@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import "react-responsive-carousel/lib/styles/carousel.min.css";
 import { Carousel } from 'react-responsive-carousel';
-
+import { Link } from 'react-router-dom';
 const AdminDashboard = () => {
   const [products, setProducts] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
@@ -80,10 +80,19 @@ const AdminDashboard = () => {
   };
 
   // Handle input changes
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setNewProduct(prev => ({ ...prev, [name]: value }));
-  };
+ // Make sure customerReviews is properly handled
+const handleInputChange = (e) => {
+  const { name, value } = e.target;
+  if (name === 'customerReviews') {
+      // Map entered reviews into an array of objects with ratings
+      const reviews = value.split('\n').map(review => {
+          return { comment: review, rating: 5 }; // Here, we can set the default rating, change as needed
+      });
+      setNewProduct(prev => ({ ...prev, [name]: reviews }));
+  } else {
+      setNewProduct(prev => ({ ...prev, [name]: value }));
+  }
+};
 
   // Handle file changes (images & videos)
   const handleFileChange = (e, type) => {
@@ -131,37 +140,42 @@ const AdminDashboard = () => {
   };
 
   // Submit form (add/update product)
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const formData = new FormData();
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  const formData = new FormData();
 
-    // Append form fields to FormData
-    Object.keys(newProduct).forEach(key => {
-      if (Array.isArray(newProduct[key])) {
-        // Handle arrays (images and videos)
-        newProduct[key].forEach(item => {
-          formData.append(key, item);
+  Object.keys(newProduct).forEach(key => {
+    if (Array.isArray(newProduct[key])) {
+      if (key === "videos" || key === "images") {
+        newProduct[key].forEach(file => {
+          formData.append(key, file);
         });
       } else {
-        // Handle other fields
-        formData.append(key, newProduct[key]);
+        formData.append(key, JSON.stringify(newProduct[key])); // Handle array fields
       }
+    } else {
+      formData.append(key, newProduct[key]);
+    }
+  });
+
+  console.log("Submitting product:", Object.fromEntries(formData.entries())); // Debugging
+
+  try {
+    const url = isUpdating
+      ? `http://localhost:8080/api/admin/products/${currentProductId}`
+      : "http://localhost:8080/api/admin/products";
+    const method = isUpdating ? "put" : "post";
+
+    await axios[method](url, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
     });
 
-    try {
-      const url = isUpdating
-        ? `http://localhost:8080/api/admin/products/${currentProductId}`
-        : "http://localhost:8080/api/admin/products";
-      const method = isUpdating ? "put" : "post";
-      await axios[method](url, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+    window.location.reload();
+  } catch (error) {
+    console.error("Error submitting product:", error.response?.data || error.message);
+  }
+};
 
-      window.location.reload();
-    } catch (error) {
-      console.error("Error submitting product:", error.response?.data || error.message);
-    }
-  };
 
   // Combine images and videos into a single array for carousel rendering
   const renderCarouselItems = (product) => {
@@ -191,7 +205,9 @@ const AdminDashboard = () => {
         <nav>
           <ul>
             <li className="mb-4">
-              <a href="#" className="hover:text-gray-300 transition">Products</a>
+             <Link to="/affiliate-clicks" className="hover:text-gray-300 transition">
+      Products
+    </Link>
             </li>
             <li className="mb-4">
               <a href="#" className="hover:text-gray-300 transition">Orders</a>
@@ -326,7 +342,18 @@ const AdminDashboard = () => {
             required
           />
         </div>
-
+<div>
+  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Category</label>
+  <input
+    type="text"
+    name="category"
+    value={newProduct.category}
+    onChange={handleInputChange}
+    placeholder="Enter product category"
+    className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none transition ease-in-out duration-150"
+    required
+  />
+</div>
         {/* Original Price */}
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Original Price</label>
