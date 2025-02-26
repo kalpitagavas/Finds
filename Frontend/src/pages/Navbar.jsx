@@ -4,7 +4,9 @@ import { motion } from "framer-motion";
 
 const Navbar = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [darkMode, setDarkMode] = useState(localStorage.getItem("theme") === "dark");
+  const [darkMode, setDarkMode] = useState(
+    localStorage.getItem("theme") === "dark"
+  );
   const [username, setUsername] = useState("");
   const [userRole, setUserRole] = useState("");
   const [userProfileImage, setUserProfileImage] = useState(""); // State for the profile image
@@ -51,7 +53,7 @@ const Navbar = () => {
     localStorage.removeItem("isVerified");
     localStorage.removeItem("lastLogin");
     localStorage.removeItem("profileImage");
-    navigate("/");  // Redirect to the home page after logout
+    navigate("/"); // Redirect to the home page after logout
   };
 
   // Check if the user is logged in
@@ -62,7 +64,11 @@ const Navbar = () => {
       <div className="max-w-screen-xl flex items-center justify-between mx-auto p-4">
         <Link to="/" className="flex items-center space-x-3">
           <img
-            src={darkMode ? "../src/assets/dark-logo.png" : "../src/assets/light-logo.png"}
+            src={
+              darkMode
+                ? "../src/assets/dark-logo.png"
+                : "../src/assets/light-logo.png"
+            }
             className="h-10 w-20"
             alt="Logo"
           />
@@ -73,20 +79,39 @@ const Navbar = () => {
           className="md:hidden text-gray-800 dark:text-white"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <svg
+            className="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            viewBox="0 0 24 24"
+          >
             {isMobileMenuOpen ? (
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M6 18L18 6M6 6l12 12"
+              ></path>
             ) : (
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16m-7 6h7"></path>
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M4 6h16M4 12h16m-7 6h7"
+              ></path>
             )}
           </svg>
         </button>
 
         <div className="hidden md:flex md:items-center md:space-x-8">
-          <Link to="/Dashboard" className="text-orange-900 hover:text-orange-600 font-semibold">Home</Link>
+          <Link
+            to="/Dashboard"
+            className="text-orange-900 hover:text-orange-600 font-semibold"
+          >
+            Home
+          </Link>
 
           {/* Add "Deals" link here */}
-          <Link to="/deals" className="text-orange-900 hover:text-orange-600 font-semibold">Deals</Link>
+          {/* <Link to="/deals" className="text-orange-900 hover:text-orange-600 font-semibold">Deals</Link> */}
         </div>
 
         {/* Profile and settings */}
@@ -104,14 +129,20 @@ const Navbar = () => {
           >
             {/* Profile image or fallback */}
             {userProfileImage ? (
-              <img className="w-8 h-8 rounded-full border" src={userProfileImage} alt="User" />
+              <img
+                className="w-8 h-8 rounded-full border"
+                src={userProfileImage}
+                alt="User"
+              />
             ) : (
               <div className="w-8 h-8 rounded-full border bg-gray-300 flex items-center justify-center">
                 <span className="text-white">?</span>
               </div>
             )}
             {username && (
-              <span className="text-white font-medium hidden md:block">{username}</span>
+              <span className="text-white font-medium hidden md:block">
+                {username}
+              </span>
             )}
           </button>
 
@@ -131,7 +162,7 @@ const Navbar = () => {
                   Admin Dashboard
                 </button>
               )}
-              
+
               {/* Only show "Login" if the user is not logged in */}
               {!isLoggedIn && (
                 <button
@@ -141,7 +172,7 @@ const Navbar = () => {
                   Login
                 </button>
               )}
-              
+
               <button
                 onClick={handleLogout}
                 className="block w-full text-left px-4 py-2 text-gray-800 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700"
@@ -175,7 +206,7 @@ const Navbar = () => {
           >
             Deals
           </Link>
-          
+
           {userRole === "admin" && (
             <button
               onClick={() => navigate("/admin-dashboard")}
@@ -184,7 +215,7 @@ const Navbar = () => {
               Admin Dashboard
             </button>
           )}
-          
+
           {/* Only show "Login" if the user is not logged in */}
           {!isLoggedIn && (
             <button

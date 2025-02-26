@@ -9,15 +9,9 @@ const AffiliateClicksDashboard = () => {
   const [successMessage, setSuccessMessage] = useState("");
   const [darkMode, setDarkMode] = useState(false);
 
-  // Set the body background color based on darkMode
   useEffect(() => {
-    if (darkMode) {
-      document.body.classList.add("bg-gray-900");
-      document.body.classList.remove("bg-white");
-    } else {
-      document.body.classList.add("bg-white");
-      document.body.classList.remove("bg-gray-900");
-    }
+    document.body.classList.toggle("bg-gray-900", darkMode);
+    document.body.classList.toggle("bg-white", !darkMode);
   }, [darkMode]);
 
   const fetchAffiliateClicks = async () => {
@@ -40,7 +34,6 @@ const AffiliateClicksDashboard = () => {
   }, []);
 
   const handleAffiliateClick = async (productId, affiliateUrl) => {
-    // Using a static userId; replace with dynamic value when available.
     const userId = "sampleUserId";
     const deviceType = "desktop";
     const source = "direct";
@@ -50,32 +43,24 @@ const AffiliateClicksDashboard = () => {
     try {
       await axios.post(
         `http://localhost:8080/api/affiliate/click/${productId}`,
-        {
-          userId,
-          deviceType,
-          source,
-        }
+        { userId, deviceType, source }
       );
-      console.log("Affiliate click tracked for product:", productId);
       setSuccessMessage("Click successfully tracked! Redirecting...");
       setTimeout(() => {
         window.location.href = affiliateUrl;
       }, 2000);
     } catch (error) {
-      console.error("Error tracking affiliate click:", error);
       setError("Error tracking affiliate click. Please try again.");
     } finally {
       setTracking(false);
     }
   };
 
-  const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
-  };
+  const toggleDarkMode = () => setDarkMode(!darkMode);
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gradient-to-r from-blue-100 to-purple-100 text-gray-600 text-xl font-semibold">
+      <div className="flex items-center justify-center h-screen bg-gradient-to-r from-blue-300 to-purple-300 text-gray-700 text-xl font-semibold">
         Loading...
       </div>
     );
@@ -83,11 +68,11 @@ const AffiliateClicksDashboard = () => {
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen space-y-4 bg-gradient-to-r from-red-50 to-red-100">
-        <p className="text-red-500 text-2xl">{error}</p>
+      <div className="flex flex-col items-center justify-center h-screen space-y-4 bg-red-50">
+        <p className="text-red-600 text-2xl">{error}</p>
         <button
           onClick={fetchAffiliateClicks}
-          className="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-all duration-300 shadow-lg"
+          className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-lg"
         >
           Retry
         </button>
@@ -96,13 +81,12 @@ const AffiliateClicksDashboard = () => {
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-8 bg-white dark:bg-gray-900 shadow-xl rounded-lg">
-      {/* Header with Back and Toggle Mode buttons */}
+    <div className="max-w-6xl mx-auto p-8 bg-white dark:bg-gray-900 shadow-2xl rounded-2xl border border-gray-200 dark:border-gray-800 backdrop-blur-md">
       <header className="flex justify-between items-center mb-8">
         <div className="flex items-center space-x-4">
           <button
             onClick={() => window.history.back()}
-            className="px-4 py-2 bg-gray-200 text-gray-800 hover:bg-gray-300 rounded-md transition"
+            className="px-4 py-2 bg-gray-200 dark:bg-gray-700 dark:text-white text-gray-800 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-lg transition"
           >
             Back
           </button>
@@ -112,9 +96,9 @@ const AffiliateClicksDashboard = () => {
         </div>
         <button
           onClick={toggleDarkMode}
-          className="px-4 py-2 bg-gray-800 text-white rounded-md hover:bg-gray-700 transition"
+          className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition"
         >
-          Toggle Mode
+          {darkMode ? "Light Mode" : "Dark Mode"}
         </button>
       </header>
 
@@ -127,34 +111,29 @@ const AffiliateClicksDashboard = () => {
           <table className="min-w-full border-collapse shadow-md rounded-lg overflow-hidden">
             <thead className="bg-gradient-to-r from-blue-500 to-purple-500 text-white">
               <tr>
-                <th className="px-4 py-3 text-left text-sm font-semibold uppercase tracking-wider">
-                  User
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-semibold uppercase tracking-wider">
-                  Product
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-semibold uppercase tracking-wider">
-                  Device Type
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-semibold uppercase tracking-wider">
-                  Affiliate URL
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-semibold uppercase tracking-wider">
-                  Referrer
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-semibold uppercase tracking-wider">
-                  Source
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-semibold uppercase tracking-wider">
-                  Clicked At
-                </th>
+                {[
+                  "User",
+                  "Product",
+                  "Device Type",
+                  "Affiliate URL",
+                  "Referrer",
+                  "Source",
+                  "Clicked At",
+                ].map((header) => (
+                  <th
+                    key={header}
+                    className="px-4 py-3 text-left text-sm font-semibold uppercase tracking-wider"
+                  >
+                    {header}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
               {clicks.map((click) => (
                 <tr
                   key={click._id}
-                  className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  className="hover:bg-gray-50 dark:hover:bg-gray-800 transition"
                 >
                   <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">
                     {click.user?.username || "Unknown User"}
@@ -170,7 +149,7 @@ const AffiliateClicksDashboard = () => {
                       href={click.affiliateUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline"
+                      className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-600 transition"
                       onClick={(e) => {
                         e.preventDefault();
                         handleAffiliateClick(
@@ -200,7 +179,6 @@ const AffiliateClicksDashboard = () => {
         </div>
       )}
 
-      {/* Status Messages */}
       {tracking && (
         <div className="mt-6 p-4 bg-blue-100 text-blue-800 rounded-md shadow animate-pulse">
           Tracking your click...
