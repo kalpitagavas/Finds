@@ -6,6 +6,7 @@ const affiliateClickRoutes = require("../Backend/routes/affiliateClickRoutes");
 const productRoutes = require("./routes/productRoutes.js");
 const userProductRoutes = require("./routes/userProductRoutes.js");
 const { trackClicks, getAllClicks } = require('./controllers/affiliateClickController.js');
+const reviewRoutes = require('./routes/reviewsRoutes.js');
 const app = express();
 const port = process.env.PORT || 8080;
 
@@ -26,7 +27,7 @@ app.use("/api/vlogs", vlogRoutes);
 app.use("/api", affiliateClickRoutes);
 app.use("/api/admin", productRoutes);
 app.use("/api/user", userProductRoutes);
-
+app.use("/api/reviews", reviewRoutes);
 
 
 app.listen(port, () => {
