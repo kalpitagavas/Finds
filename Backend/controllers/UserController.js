@@ -109,7 +109,9 @@ const getUserProfile = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
 const updateUserProfile = async (req, res) => {
+  // Use the upload middleware to handle file uploads (profile image)
   upload(req, res, async (err) => {
     if (err) {
       return res.status(400).json({ message: "File upload error", error: err.message });
@@ -117,14 +119,14 @@ const updateUserProfile = async (req, res) => {
 
     try {
       const { username, email } = req.body;
-
+      // Validate email uniqueness if provided
       if (email) {
         const emailExists = await User.findOne({ email });
         if (emailExists && emailExists._id.toString() !== req.user.id.toString()) {
           return res.status(400).json({ message: "Email is already in use." });
         }
       }
-
+      // Validate username uniqueness if provided
       if (username) {
         const usernameExists = await User.findOne({ username });
         if (usernameExists && usernameExists._id.toString() !== req.user.id.toString()) {
@@ -132,18 +134,22 @@ const updateUserProfile = async (req, res) => {
         }
       }
 
+      // Prepare update data object
       const updateData = {};
       if (username) updateData.username = username;
       if (email) updateData.email = email;
-
-      // If a new profile picture is uploaded, set the profilePic field
+      // If a file is uploaded, update the profilePic field
       if (req.file) {
         updateData.profilePic = `/uploads/${req.file.filename}`;
       }
 
+      // Update the user in the database and return the updated record (excluding password)
       const updatedUser = await User.findByIdAndUpdate(req.user.id, updateData, { new: true }).select("-password");
 
-      res.status(200).json({ message: "User profile updated successfully", user: { ...updatedUser._doc, profilePic: updateData.profilePic } });
+      res.status(200).json({
+        message: "User profile updated successfully",
+        user: updatedUser,
+      });
     } catch (error) {
       res.status(500).json({ message: "Server error", error: error.message });
     }
